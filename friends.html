@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SelfE — Friends</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="app-bg">
+  <header class="topbar">
+    <div class="brand-small">SelfE</div>
+    <div class="top-actions">
+      <button id="backBtn" class="icon-btn">Back</button>
+    </div>
+  </header>
+
+  <section class="container">
+    <h2>Friends / Social</h2>
+    <p>Search a username to add (mocked).</p>
+
+    <div class="row">
+      <input id="searchUser" placeholder="Type username (e.g. alex123)" />
+      <button id="searchBtn" class="btn small">Search</button>
+    </div>
+
+    <div id="resultCard" class="card hidden">
+      <div id="resName" class="friend-name"></div>
+      <div class="friend-meta">Streak: <span id="resStreak">7</span> days</div>
+      <div class="row">
+        <button id="sendReminder" class="btn">Send Promise Reminder</button>
+        <button id="addFriend" class="btn outline">Add Friend</button>
+      </div>
+    </div>
+
+    <p class="muted">This is visually mocked for the hackathon. When you press "Send Promise Reminder" it logs a reminder object to Firestore (if signed in).</p>
+  </section>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="firebase-config.js"></script>
+  <script>
+    document.getElementById('backBtn').addEventListener('click', () => location.href = 'dashboard.html');
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('searchUser');
+    const resultCard = document.getElementById('resultCard');
+    const resName = document.getElementById('resName');
+    const sendReminderBtn = document.getElementById('sendReminder');
+    const addFriendBtn = document.getElementById('addFriend');
+
+    searchBtn.addEventListener('click', () => {
+      const q = (searchInput.value || '').trim();
+      if (!q) return;
+      // fake a found user
+      resName.textContent = q;
+      document.getElementById('resStreak').textContent = Math.floor(Math.random()*30)+1;
+      resultCard.classList.remove('hidden');
+    });
+
+    sendReminderBtn.addEventListener('click', async () => {
+      const uid = localStorage.getItem('selfe_uid');
+      if (!uid) return alert('Sign in to send reminders (demoed locally).');
+
+      const payload = {
+        from: uid,
+        toUsername: resName.textContent,
+        type: 'reminder',
+        message: 'Hey — check your promise!',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      try {
+        await firebase.firestore().collection('notifications').add(payload);
+        alert('Reminder sent (logged to Firestore).');
+      } catch(e) {
+        alert('Failed to send — saved locally as demo.');
+      }
+    });
+
+    addFriendBtn.addEventListener('click', async () => {
+      alert('Friend added (mock). In a full build this would send a friend request.');
+    });
+  </script>
+</body>
+</html>

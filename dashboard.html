@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SelfE — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="app-bg">
+  <header class="topbar">
+    <div class="brand-small">SelfE</div>
+    <div class="top-actions">
+      
+      <button id="friendsBtn" class="icon-btn">Friends</button>
+      <button id="settingsBtn" class="icon-btn">⚙️</button>
+      <button id="logoutBtn" class="icon-btn danger">Logout</button>
+      <button id="goalsBtn" class="icon-btn">Goals</button>
+    </div>
+  </header>
+
+  <section class="container">
+    <div class="welcome">
+      <h2 id="welcomeText">Welcome</h2>
+      <p id="quote">Loading quote…</p>
+    </div>
+    
+    <div class="stats-container">
+      <h3>Your Stats</h3>
+      <div id="analyticsBlock" class="stats-grid">
+        <div>
+          <h4>Weekly Activity</h4>
+          <p id="statWeekly">- / 7</p>
+          <small>Days with entries</small>
+        </div>
+        <div>
+          <h4>Goals Done</h4>
+          <p id="statGoals">- %</p>
+          <small>Goals completed</small>
+        </div>
+        <div>
+          <h4>Total Entries</h4>
+          <p id="statTotal">-</p>
+          <small>All-time entries</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="reminder-block">
+      <label>Reminder time:</label>
+      <input id="reminderTime" type="time"/>
+      <button id="setReminder" class="btn small">Set</button>
+      <button id="testReminder" class="btn small outline">Test</button>
+    </div>
+
+    <div class="entries">
+      <h3>Entries</h3>
+      <input type_model="search" id="searchBar" class="form-input" placeholder="Search entries...">
+      <div id="entriesList" class="list"></div>
+    </div>
+  </section>
+
+  <template id="entryTemplate">
+    <div class="entry-card">
+      <div class="entry-head">
+        <div class="entry-title-row">
+  <div class="entry-mood"></div>
+  <div class="entry-title"></div>
+</div>
+        <div class="entry-actions">
+          <button class="edit">Edit</button>
+          <button class="delete danger">Delete</button>
+        </div>
+      </div>
+      <div class="entry-body"></div>
+      <div class="entry-meta"></div>
+    </div>
+  </template>
+  <button id="fabAddEntry" class="fab" title="New Entry">+</button>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="firebase-config.js"></script>
+  
+  <script>
+    // helper + app state
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    let currentUser = null;
+    const localKey = 'selfe_local_entries_v1';
+
+    // UI refs
+    const welcomeText = document.getElementById('welcomeText');
+    const entriesList = document.getElementById('entriesList');
+    const entryTemplate = document.getElementById('entryTemplate');
+    const quoteEl = document.getElementById('quote');
+    // --- Search Bar Logic ---
+const searchBar = document.getElementById('searchBar');
+searchBar.addEventListener('input', (e) => {
+  const query = e.target.value.toLowerCase();
+
+  // Get all the entry cards
+  const entries = document.querySelectorAll('#entriesList .entry-card');
+
+  entries.forEach(card => {
+    // Get the text from the title and body
+    const title = card.querySelector('.entry-title').textContent.toLowerCase();
+    const body = card.querySelector('.entry-body').textContent.toLowerCase();
+
+    // Show or hide the card
+    if (title.includes(query) || body.includes(query)) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+});
+
+    // All navigation buttons
+    document.getElementById('fabAddEntry').addEventListener('click', () => location.href = 'entry.html');
+    document.getElementById('friendsBtn').addEventListener('click', () => location.href = 'friends.html');
+    document.getElementById('settingsBtn').addEventListener('click', () => location.href = 'settings.html');
+    document.getElementById('goalsBtn').addEventListener('click', () => location.href = 'goals.html');
+
+    // The logout button
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try { await auth.signOut(); } catch(e){ /* ignore */ }
+      localStorage.removeItem('selfe_uid');
+      location.href = 'index.html';
+    });
+
+    // --- NEW ANALYTICS FUNCTIONS ---
+    function calculateAnalytics(entries, goals) {
+      const totalGoals = goals.length;
+      const completedGoals = goals.filter(g => g.completed).length;
+      const goalPercent = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
+      const totalEntries = entries.length;
+
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const recentEntries = entries.filter(e => {
+        const entryDate = e.createdAt?.toDate ? e.createdAt.toDate() : new Date(e.createdAt);
+        return entryDate > sevenDaysAgo;
+      });
+      
+      const uniqueDays = new Set(
+        recentEntries.map(e => {
+          const entryDate = e.createdAt?.toDate ? e.createdAt.toDate() : new Date(e.createdAt);
+          return entryDate.toDateString();
+        })
+      );
+      const weeklyActivity = uniqueDays.size;
+      return { goalPercent, totalEntries, weeklyActivity };
+    }
+
+    async function loadAndShowAnalytics(uid) {
+      try {
+        const entriesSnap = await db.collection('users').doc(uid).collection('entries').get();
+        const entries = entriesSnap.docs.map(d => d.data());
+
+        const goalsSnap = await db.collection('users').doc(uid).collection('goals').get();
+        const goals = goalsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        const stats = calculateAnalytics(entries, goals);
+
+        document.getElementById('statWeekly').textContent = `${stats.weeklyActivity} / 7`;
+        document.getElementById('statGoals').textContent = `${stats.goalPercent.toFixed(0)} %`;
+        document.getElementById('statTotal').textContent = stats.totalEntries;
+
+      } catch (e) {
+        console.error("Error loading analytics:", e);
+      }
+    }
+
+    // Auth state
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
+        // demo mode
+        welcomeText.textContent = 'Welcome (Demo Mode)';
+        currentUser = null;
+        loadEntries();
+        loadQuote();
+        document.querySelector('.stats-container').style.display = 'none';
+        return;
+      }
+      currentUser = user;
+      localStorage.setItem('selfe_uid', user.uid);
+      welcomeText.textContent = `Welcome, ${user.displayName.split(' ')[0]}`;
+      
+      // Call all the load functions
+      loadEntries();
+      loadQuote();
+      loadAndShowAnalytics(user.uid);
+    });
+
+    // Fetch entries (local first)
+    async function loadEntries() {
+      entriesList.innerHTML = '';
+      const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+      
+      const uid = localStorage.getItem('selfe_uid');
+      let online = [];
+      if (uid) {
+        try {
+          const q = await db.collection('users').doc(uid).collection('entries').limit(50).get();
+          online = q.docs.map(d => ({ id: d.id, ...d.data() }));
+          online.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+        } catch (e) {
+          console.error("Error loading entries:", e);
+          entriesList.innerHTML = `<p class="danger">Error loading entries. You may need to update Firestore rules or check your console (F12).</p>`;
+        }
+      }
+      
+      entriesList.innerHTML = '';
+      online.forEach(renderEntry);
+      
+      local.slice().reverse().forEach(e => {
+        if (!online.find(x => x.id === e.id)) renderEntry(e, true);
+      });
+
+      if (online.length === 0 && local.length === 0) {
+         entriesList.innerHTML = `<p class="muted">No entries yet. <a href="entry.html">Write one!</a></p>`;
+      }
+    }
+
+    function renderEntry(entry, faded=false) {
+      if (!entryTemplate) {
+        console.error('Cannot find <template id="entryTemplate">');
+        return;
+      }
+      const node = entryTemplate.content.cloneNode(true);
+      const title = node.querySelector('.entry-title');
+      const mood = node.querySelector('.entry-mood');
+      const body = node.querySelector('.entry-body');
+      const meta = node.querySelector('.entry-meta');
+      const editBtn = node.querySelector('.edit');
+      const delBtn = node.querySelector('.delete');
+
+      title.textContent = entry.title || '(No title)';
+      // --- Render the mood ---
+if (entry.mood) {
+  mood.textContent = entry.mood;
+  mood.style.display = 'block';
+} else {
+  mood.style.display = 'none'; // Hide if no mood
+}
+      body.textContent = entry.text || '';
+      meta.textContent = new Date((entry.createdAt && entry.createdAt.seconds) ? entry.createdAt.toDate() : entry.createdAt || Date.now()).toLocaleString();
+      if (faded) node.querySelector('.entry-card').classList.add('faded');
+
+      editBtn.onclick = () => {
+        const url = new URL(location.origin + '/entry.html');
+        if (entry.id) url.searchParams.set('id', entry.id);
+        else url.searchParams.set('local', '1');
+        url.searchParams.set('title', encodeURIComponent(entry.title || ''));
+        url.searchParams.set('text', encodeURIComponent(entry.text || ''));
+        location.href = url.toString();
+      };
+
+      delBtn.onclick = async () => {
+        if (!confirm('Delete this entry?')) return;
+        const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+        const remained = local.filter(e => e.id !== entry.id);
+        localStorage.setItem(localKey, JSON.stringify(remained));
+        
+        const uid = localStorage.getItem('selfe_uid');
+        if (uid && entry.id) {
+          try { await db.collection('users').doc(uid).collection('entries').doc(entry.id).delete(); } catch(e){}
+        }
+        loadEntries();
+      };
+
+      entriesList.appendChild(node);
+    }
+
+    function loadQuote() {
+      const quotes = [
+        "You got this!",
+        "Do one thing today your future self will thank you for.",
+        "Small wins stack. Start now.",
+        "Promise kept is progress made."
+      ];
+      quoteEl.textContent = quotes[Math.floor(Math.random()*quotes.length)];
+    }
+
+    // Reminder UI and logic
+    const reminderTimeInput = document.getElementById('reminderTime');
+    const setBtn = document.getElementById('setReminder');
+    const testBtn = document.getElementById('testReminder');
+
+    setBtn.addEventListener('click', () => {
+      const t = reminderTimeInput.value;
+      if (!t) return alert('Pick a time');
+      localStorage.setItem('selfe_reminder_time', t);
+      scheduleDailyReminder(t);
+      alert('Reminder set for ' + t);
+    });
+
+    testBtn.addEventListener('click', () => {
+      triggerReminder('Test reminder — time to check your promise!');
+    });
+
+    function scheduleDailyReminder(timeStr) {
+      if (window.__selfeReminderInterval) clearInterval(window.__selfeReminderInterval);
+      const [hh, mm] = timeStr.split(':').map(Number);
+      window.__selfeReminderInterval = setInterval(() => {
+        const d = new Date();
+        if (d.getHours() === hh && d.getMinutes() === mm) {
+          if (d.getSeconds() < 5) triggerReminder('Hey, time to check your promises!');
+        }
+      }, 1000);
+    }
+
+    async function triggerReminder(message) {
+      if (Notification.permission !== 'granted') {
+        await Notification.requestPermission();
+      }
+      if (Notification.permission === 'granted') {
+        new Notification('SelfE Reminder', { body: message, icon: 'assets/icons/notify.png' });
+      } else {
+        console.warn("Notification permission denied. Reminder: " + message);
+      }
+      try {
+        const audio = new Audio('assets/audio/reminder.mp3');
+        audio.play().catch(()=>{ /* ignore autoplay issues */ });
+      } catch(e){}
+    }
+
+    // init
+    (function init() {
+      const t = localStorage.getItem('selfe_reminder_time');
+      if (t) { reminderTimeInput.value = t; scheduleDailyReminder(t); }
+      loadQuote();
+
+      const uid = localStorage.getItem('selfe_uid');
+      if (uid) {
+        const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+        local.forEach(async e => {
+          // --- THIS IS THE FIX ---
+          // Removed the extra dot from 'e..id'
+          if (e.id && e.id.startsWith('local_')) { 
+            try {
+              const doc = await db.collection('users').doc(uid).collection('entries').add({
+                title: e.title || '',
+                text: e.text || '',
+                createdAt: new Date(e.createdAt),
+                localOnly: true
+              });
+              e.id = doc.id; 
+            } catch(err) {
+              console.error("Error syncing local entry: ", err);
+            }
+          }
+        });
+        localStorage.setItem(localKey, JSON.stringify(local));
+      } else {
+        loadEntries();
+      }
+    })();
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+    }
+  </script>
+  
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SelfE — Entry</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="app-bg">
+  <header class="topbar">
+    <div class="brand-small">SelfE</div>
+    <div class="top-actions">
+      <button id="backBtn" class="icon-btn">Back</button>
+    </div>
+  </header>
+
+  <section class="container">
+    <h2 id="pageTitle">New Entry</h2>
+    <div class="form">
+      <input id="title" placeholder="Title" />
+      <textarea id="text" rows="8" placeholder="Write your memory or promise..."></textarea>
+      <textarea id="text" rows="8" placeholder="Write your memory or promise..."></textarea>
+
+  <div class="row">
+    <label>How are you feeling?</label>
+    <div class="mood-selector">
+      <span class="mood-option" data-mood="😊">😊</span>
+      <span class="mood-option" data-mood="😐">😐</span>
+      <span class="mood-option" data-mood="😢">😢</span>
+      <span class="mood-option" data-mood="😠">😠</span>
+      <span class="mood-option" data-mood="✨">✨</span>
+    </div>
+    <input type="hidden" id="moodInput" value="">
+  </div>
+
+  <div class="row">
+    <label for="audioUpload">Add audio (optional)</label>
+      <div class="row">
+        <label for="audioUpload">Add audio (optional)</label>
+        <input id="audioUpload" type="file" accept="audio/*">
+      </div>
+      <div class="row actions">
+        <button id="saveBtn" class="btn">Save</button>
+        <button id="cancelBtn" class="btn outline">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="firebase-config.js"></script>
+  <script>
+    const backBtn = document.getElementById('backBtn');
+    backBtn.addEventListener('click', ()=> location.href = 'dashboard.html');
+
+    const titleInput = document.getElementById('title');
+    const textInput = document.getElementById('text');
+    const audioInput = document.getElementById('audioUpload');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    // --- Mood Selector Logic ---
+const moodOptions = document.querySelectorAll('.mood-option');
+const moodInput = document.getElementById('moodInput');
+
+moodOptions.forEach(opt => {
+  opt.addEventListener('click', () => {
+    // Clear any old selection
+    moodOptions.forEach(m => m.classList.remove('selected'));
+
+    // Set the new selection
+    opt.classList.add('selected');
+    moodInput.value = opt.dataset.mood;
+  });
+});
+
+    cancelBtn.addEventListener('click', ()=> location.href = 'dashboard.html');
+
+    // prefill if editing
+    const url = new URL(window.location.href);
+    const presetTitle = url.searchParams.get('title');
+    const presetText = url.searchParams.get('text');
+    if (presetTitle) titleInput.value = decodeURIComponent(presetTitle);
+    if (presetText) textInput.value = decodeURIComponent(presetText);
+
+    saveBtn.addEventListener('click', async () => {
+      const title = titleInput.value.trim();
+      const text = textInput.value.trim();
+      const mood = moodInput.value; // <-- GETS THE MOOD
+      if (!title && !text) return alert('Write something!');
+      const uid = localStorage.getItem('selfe_uid');
+      const localKey = 'selfe_local_entries_v1';
+
+      // create a lightweight local entry object
+      const entry = {
+        id: 'local_' + Date.now(),
+        title, text,mood: mood || null,
+        createdAt: Date.now()
+      };
+
+      // save audio as local blob URL (if provided)
+      if (audioInput.files && audioInput.files[0]) {
+        // for now keep local URL. In a full build you would upload to storage.
+        entry.audioName = audioInput.files[0].name;
+      }
+
+      // if user is logged in → save to Firestore
+      if (uid) {
+        try {
+          const docRef = await firebase.firestore().collection('users').doc(uid).collection('entries').add({
+            title, text,mood: mood || null, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          alert('Saved to cloud!');
+          location.href = 'dashboard.html';
+          return;
+        } catch (e) {
+          console.warn(e);
+          // fallback to local storage
+        }
+      }
+
+      // fallback: save to localStorage (offline-mode)
+      const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+      local.push(entry);
+      localStorage.setItem(localKey, JSON.stringify(local));
+      alert('Saved locally (demo/offline).');
+      location.href = 'dashboard.html';
+    });
+  </script>
+</body>
+</html>

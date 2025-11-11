@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SelfE — Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="app-bg">
+  <header class="topbar">
+    <div class="brand-small">SelfE</div>
+    <div class="top-actions">
+      <button id="backBtn" class="icon-btn">Back</button>
+    </div>
+  </header>
+
+  <section class="container">
+  <h2>Settings</h2>
+
+  <div class="setting-item">
+    <div class="setting-label">
+      <strong>Dark Mode</strong>
+      <small class="muted">Toggle the app's theme</small>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="toggleTheme">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="setting-item">
+    <div class="setting-label">
+      <strong>Daily Quote</strong>
+      <small id="curQuote" class="muted">Loading...</small>
+    </div>
+    <button id="refreshQuote" class="btn small outline">Refresh</button>
+  </div>
+
+  <div class="setting-item danger-zone">
+    <div class="setting-label">
+      <strong>Clear Local Data</strong>
+      <small class="muted">This will delete all unsynced entries.</small>
+    </div>
+    <button id="clearLocal" class="btn danger">Clear</button>
+  </div>
+</section>
+
+  <script>
+  document.getElementById('backBtn').addEventListener('click', ()=> location.href='dashboard.html');
+
+  // --- Dark Mode Toggle ---
+  const themeToggle = document.getElementById('toggleTheme');
+  
+  // Check if dark mode is already set from a previous session (optional but good)
+  if (document.body.classList.contains('dark')) {
+    themeToggle.checked = true;
+  }
+  
+  themeToggle.addEventListener('change', () => {
+    // Use the checkbox's 'checked' state to add/remove the class
+    document.body.classList.toggle('dark', themeToggle.checked);
+    // You can also save this preference to localStorage
+  });
+
+  // --- Quote Refresh ---
+  const quoteEl = document.getElementById('curQuote');
+  const quotes = [
+    "You got this!",
+    "Small wins stack.",
+    "Keep promises to yourself.",
+    "One step at a time."
+  ];
+  
+  function getQuote() {
+    quoteEl.textContent = quotes[Math.floor(Math.random()*quotes.length)];
+  }
+  // Add listener and also load a quote when the page opens
+  document.getElementById('refreshQuote').addEventListener('click', getQuote);
+  getQuote(); 
+
+  // --- Clear Local Data ---
+  document.getElementById('clearLocal').addEventListener('click', ()=> {
+    if (!confirm('Clear all local saved entries? This cannot be undone.')) return;
+    localStorage.removeItem('selfe_local_entries_v1');
+    alert('Local data cleared.');
+  });
+</script>
+</body>
+</html>

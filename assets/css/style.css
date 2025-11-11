@@ -1,0 +1,347 @@
+:root{
+  --bg1:#0b1221; --bg2:#0f1a2b;
+  --card:#0f1724; --muted:#9aa4b2; --accent:#7de3c7;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Caveat', 'Helvetica', sans-serif;
+}
+*{box-sizing:border-box}
+body {
+  margin: 0;
+  /* New radial gradient layered on top */
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 70%), 
+              linear-gradient(180deg, var(--bg1), var(--bg2));
+  color: #e6eef6;
+  min-height: 100vh;
+}
+.app-bg{padding-top:60px}
+.center-card{max-width:420px;margin:8vh auto;padding:28px;background:rgba(255,255,255,0.03);border-radius:16px;backdrop-filter: blur(6px);text-align:center}
+.brand{font-family:'Caveat',cursive;font-size:44px;margin:0}
+.brand-small{font-family:'Caveat',cursive;font-size:20px}
+.sub{color:var(--muted);margin-bottom:18px}
+.btn{background:linear-gradient(90deg,var(--accent),#59d7b0);border:0;padding:10px 14px;border-radius:10px;color:#062024;font-weight:600;cursor:pointer}
+.btn.small{padding:6px 8px;font-size:14px}
+.btn.outline{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+.icon-btn{background:transparent;border:0;color:inherit;padding:8px;cursor:pointer}
+.danger{background:#ff6b6b;color:#140808}
+.container{max-width:900px;margin:24px auto;padding:18px}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(2,6,10,0.25);display:flex;align-items:center;justify-content:space-between;padding:0 12px;backdrop-filter: blur(6px)}
+.welcome{margin-bottom:18px}
+.reminder-block{display:flex;gap:8px;align-items:center;margin-bottom:18px}
+.entries .list{display:grid;gap:12px}
+.entry-card{background:rgba(255,255,255,0.02);padding:12px;border-radius:12px}
+.entry-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.entry-title{font-weight:700}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.hidden{display:none}
+.card{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;margin-top:12px}
+.friend-name{font-weight:700}
+.row{display:flex;gap:10px;align-items:center;margin-top:10px}
+.form input, .form textarea, .row input[type="time"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+.faded{opacity:0.7}
+/* --- Styles for Analytics Grid --- */
+.stats-container {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+.stats-container h3 {
+  margin-top: 0;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  text-align: center;
+}
+.stats-grid h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.stats-grid p {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.stats-grid small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* --- Style for the new divider --- */
+hr.divider {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 24px 0;
+}
+
+/* --- Polish for Entry Cards --- */
+.entry-card {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.entry-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+/* --- Hover & Interaction Effects --- */
+
+/* Make the button "glow" or "lift" */
+.btn {
+  /* ... existing .btn styles ... */
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+  transform: translateY(-2px); /* Lifts the button */
+  box-shadow: 0 4px 15px rgba(125, 227, 199, 0.2); /* Adds a colored glow */
+}
+
+/* Make footer links change color */
+.footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: var(--accent); /* Changes to the accent color on hover */
+}
+/* --- Animation --- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply the animation to the card */
+#loginCard {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+/* --- Hover & Interaction Effects --- */
+
+/* Make the button "glow" or "lift" */
+.btn {
+  /* This makes the movement smooth */
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+  transform: translateY(-2px); /* Lifts the button */
+  box-shadow: 0 4px 15px rgba(125, 227, 199, 0.2); /* Adds a colored glow */
+}
+
+/* Make footer links change color */
+.footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: var(--accent); /* Changes to the accent color on hover */
+}
+/* --- Card Polish & Feedback --- */
+
+/* This styles the cards on the Dashboard AND Goals page */
+.entry-card {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Add a "lift" effect when you hover over any card */
+.entry-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(125, 227, 199, 0.3); /* Uses your accent color */
+}
+
+/* This is the new CSS from your goals.js */
+.goal-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.goal-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.goal-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+/* This gives satisfying feedback when checking a goal */
+.completed-goal {
+  opacity: 0.6;
+}
+.completed-goal .entry-title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+/* --- Page Fade-in Animation --- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply this animation to the main container on every page */
+.container {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+/* --- Floating Action Button --- */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #062024;
+  border: none;
+  font-size: 28px;
+  line-height: 56px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.2s ease-in-out;
+}
+
+.fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(125, 227, 199, 0.3);
+}
+/* --- Search Bar Style --- */
+.form-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.02);
+  color: inherit;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+/* --- Mood Selector (on entry.html) --- */
+.mood-selector {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+.mood-option {
+  font-size: 28px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+}
+.mood-option:hover {
+  transform: scale(1.2);
+  opacity: 1;
+}
+.mood-option.selected {
+  transform: scale(1.1);
+  opacity: 1;
+  text-shadow: 0 0 10px var(--accent);
+}
+
+/* --- Mood Display (on dashboard.html) --- */
+.entry-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.entry-mood {
+  font-size: 20px;
+}
+/* --- Settings Page UI --- */
+.setting-item {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.setting-label strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+.setting-label small {
+  font-size: 13px;
+}
+.danger-zone {
+  border-color: rgba(255, 107, 107, 0.2);
+}
+.danger-zone .setting-label strong {
+  color: #ff6b6b;
+}
+
+/* --- CSS Toggle Switch --- */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: .4s;
+  border-radius: 34px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: var(--accent);
+}
+input:checked + .slider:before {
+  transform: translateX(22px);
+}

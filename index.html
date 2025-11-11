@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SelfE Diary — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="bg-gradient">
+  <main class="center-card" id="loginCard">
+    <h1 class="brand">DEAR FUTURE ME</h1>
+    <p class="sub">Diary · Promises · Reminders</p>
+
+    <button id="googleSignIn" class="btn">Sign in with Google</button>
+
+    <p class="small muted">Demo mode: you can use without signing in — entries saved locally.</p>
+
+    <div class="footer-links">
+      <a href="dashboard.html">Continue in Demo Mode</a>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="firebase-config.js"></script>
+  <script>
+    // Quick auth + redirect
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const btn = document.getElementById('googleSignIn');
+    btn.addEventListener('click', async () => {
+      try {
+        const res = await firebase.auth().signInWithPopup(provider);
+        const user = res.user;
+        // ensure user doc
+        const db = firebase.firestore();
+        await db.collection('users').doc(user.uid).set({
+          name: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        location.href = 'dashboard.html';
+      } catch (e) {
+        alert('Auth error: ' + e.message);
+      }
+    });
+  </script>
+</body>
+</html>
